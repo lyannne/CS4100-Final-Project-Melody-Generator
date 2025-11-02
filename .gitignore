@@ -1,0 +1,9 @@
+data/raw/
+data/processed/
+models/
+outputs/
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep
+!outputs/.gitkeep
