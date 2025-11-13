@@ -2,7 +2,7 @@ import pickle
 from collections import defaultdict
 from typing import Iterable, Tuple, Dict
 
-def train_second_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[Tuple[float, float], Dict[float, float]], Dict[Tuple[float, float], float]]:
+def secondOrderMM(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[Tuple[float, float], Dict[float, float]], Dict[Tuple[float, float], float]]:
     """
     Input:
     `data`: list of melodies, with each melody represented as a sequence of numbers
