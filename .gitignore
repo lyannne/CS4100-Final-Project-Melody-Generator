@@ -1,9 +1,18 @@
 data/raw/
 data/processed/
 models/
-outputs/
+data/test_dir/
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !models/.gitkeep
 !outputs/.gitkeep
+
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.DS_Store
+venv/
+env/
+.env
