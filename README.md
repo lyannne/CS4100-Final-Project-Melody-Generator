@@ -49,14 +49,17 @@ Not required for core functionality.
 
 ### Using the program
 The easiest way to do this is with `pipeline.py`. This keeps all generated files well-organized, with consistent names to allow efficient data and model reuse.  
-Make sure you're in the root directory. Then, you will call `python3 src/main.py` in your command line, and the following flags are available:  
+Make sure you're in the root directory. Then, you will call `python3 src/pipeline.py` in your command line, and the following flags are available:  
 `--genres` or `-g` : Takes one or more of `classical`, `jazz`, `nes`, `pop`, or `all`. e.g. `-g nes pop`. Not required; defaults to `all`. Beware `all` will take some time to process.  
 `--order` or `-or` : Takes one of `first` or `second`, to determine the order of the markov model. Required.  
 `--chord-strategy` or `-c` : Takes one of `highest`, `root`, or `skip`, to determine how to process chords in midi files. Not required; defaults to `highest`.  
 `--num-samples` or `-n` : Takes how many samples to generate. Not required; defaults to 1.  
 `--bpm` : Takes desired BPM for generated melodies. Not required; defaults to 120.  
 `--length` : Takes desired length for generated melodies. Not required; defaults to 30.  
-An example command looks like: `python3 src/main.py -g jazz -or second -n 5`  
+An example command looks like:
+```bash
+python3 src/pipeline.py -g jazz -or second -n 5
+```
 
 Note: The script will not re-generate preprocessed data or models if they already exist. Processed data is unique by its genres and chord strategy, and a model its genres, chord strategy, and order. If you want to generate a second version of these for some reason, rename the old one or move it to a different directory.  
 
