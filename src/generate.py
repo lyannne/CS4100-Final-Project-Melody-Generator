@@ -1,5 +1,8 @@
 from music21 import stream, note, tempo, midi
 import random
+import argparse
+import pickle
+import time
 
 REST = -1
 
@@ -167,3 +170,82 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
         print(f"Saved as {save_path}")
 
     return output_stream
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate midi files")
+
+    parser.add_argument(
+        "--input", "-i",
+        help="Path to the model directory"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Path to the sample output file"
+    )
+    parser.add_argument(
+        "--order", "-or",
+        choices=['first', 'second'],
+        help="`first` or `second` depending out input model."
+    )
+    parser.add_argument(
+        "--bpm", 
+        type=int, 
+        default=120,
+        help="Set BPM, default 120"
+    )
+    parser.add_argument(
+        "--length", 
+        type=int, 
+        default=30,
+        help="Set length [in seconds] if provided. Default 30"
+    )
+
+    args = parser.parse_args()
+
+    # set up args
+    input_model_dir = args.input
+    output_file = args.output
+    order = args.order
+    bpm = args.bpm
+    length = args.length
+
+    # get models
+    pitch_model = input_model_dir + '/pitch.pkl'
+    duration_model = input_model_dir + '/duration.pkl'
+    try:
+        with open(pitch_model, 'rb') as file:
+            pitch_transitions, pitch_dist = pickle.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{pitch_model}' was not found.")
+        return
+    except Exception as e:
+        print(f"An error occurred during extraction: {e}")
+        return
+
+    try:
+        with open(duration_model, 'rb') as file:
+            duration_transitions, duration_dist = pickle.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{duration_model}' was not found.")
+        return
+    except Exception as e:
+        print(f"An error occurred during extraction: {e}")
+        return
+            
+    print("="*50)
+    print("Generating melodies...")
+
+    start_time = time.time()
+    if order == 'first':
+        generate_first_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file)
+    if order == 'second':
+        generate_second_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file)
+    end_time = time.time()
+
+    print("="*50)
+    print("\nFinished generating melody: ")
+    print(f"Completed process in {end_time - start_time:.2f} seconds")
+    print(f"Saved melody to {output_file}")
+
+if __name__ == "__main__":
+    main()

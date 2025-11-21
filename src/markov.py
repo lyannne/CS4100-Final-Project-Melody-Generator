@@ -2,8 +2,12 @@ import pickle
 from collections import defaultdict
 from typing import Iterable, Tuple, List, Dict
 import numpy as np
+import sys
+import time
+import argparse
+import os
 
-def train_first_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[float, Dict[float, float]], Dict[float, float]]:
+def construct_first_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[float, Dict[float, float]], Dict[float, float]]:
     """
     Input:
     `data`: list of numbers, representing a sequence of notes or durations
@@ -90,7 +94,7 @@ def train_first_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tup
     return transition_dict, start_dist_dict
 
 
-def train_second_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[Tuple[float, float], Dict[float, float]], Dict[Tuple[float, float], float]]:
+def construct_second_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tuple[Dict[Tuple[float, float], Dict[float, float]], Dict[Tuple[float, float], float]]:
     """
     Input:
     `data`: list of numbers, representing a sequence of notes or durations
@@ -142,4 +146,58 @@ def train_second_order(data: Iterable[Iterable[float]], save_to_file=None) -> Tu
     
     return transition_dict, start_dist_dict
 
+def main():
+    parser = argparse.ArgumentParser(
+        description="Construct markov model from data"
+    )
+    parser.add_argument(
+        "--input", "-i",
+        required=True,
+        help='The path to the processed data file'
+    )
+    parser.add_argument(
+        "--output", "-o",
+        required=True,
+        help='The path to the output model directory'
+    )
+    parser.add_argument(
+        "--order", "-or",
+        required=True,
+        help='Order for desired markov model, one of `first` or `second`',
+        choices=["first", "second"]
+    )
+    args = parser.parse_args()
 
+    input_data = args.input
+    pitch_output_file = os.path.join(args.output, 'pitch.pkl')
+    duration_output_file = os.path.join(args.output, 'duration.pkl')
+    order = args.order
+
+    try:
+        with open(input_data, 'rb') as file:
+            pitches, durations = pickle.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{input_data}' was not found.")
+    except Exception as e:
+        print(f"An error occurred during extraction: {e}")
+           
+    print("="*50)
+    print("Constructing Markov Models...")
+
+    start_time = time.time()
+    if (order == 'first'):
+        construct_first_order(pitches, pitch_output_file)
+        construct_first_order(durations, duration_output_file)
+    else:
+        construct_second_order(pitches, pitch_output_file)
+        construct_second_order(durations, duration_output_file)
+
+    print("="*50)
+    end_time = time.time()
+
+    print("\nFinished constructing models: ")
+    print(f"Completed process in {end_time - start_time:.2f} seconds")
+    print(f"Saved {order} order markov model for {input_data} to {pitch_output_file} and {duration_output_file}")
+
+if __name__ == "__main__":
+    main()
