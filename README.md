@@ -44,23 +44,23 @@ MIDI files are not included directly due to size. Instead, follow these steps:
 2. Extract them into `data/raw/`. They should remain in their folders, e.g.: `data/raw/classical/**.mid` 
 
 ### Optional: MuseScore (for visualization)
-Download from https://musescore.org/ to view generated melodies as sheet music. 
+Download from https://musescore.org/ to view generated melodies as sheet music.  
 Not required for core functionality.
 
 ### Using the program
-The easiest way to do this is with `pipeline.py`. This keeps all generated files well-organized, with consistent names to allow efficient data and model reuse.
-Make sure you're in the root directory. Then, you will call `python3 src/main.py` in your command line, and the following flags are available:
-`--genres` or `-g` : Takes one or more of `classical`, `jazz`, `nes`, `pop`, or `all`. e.g. `-g nes pop`. Not required; defaults to `all`. Beware `all` will take some time to process.
-`--order` or `-or` : Takes one of `first` or `second`, to determine the order of the markov model. Required.
-`--chord-strategy` or `-c` : Takes one of `highest`, `root`, or `skip`, to determine how to process chords in midi files. Not required; defaults to `highest`.
-`--num-samples` or `-n` : Takes how many samples to generate. Not required; defaults to 1.
-`--bpm` : Takes desired BPM for generated melodies. Not required; defaults to 120.
-`--length` : Takes desired length for generated melodies. Not required; defaults to 30.
-An example command looks like: `python3 src/main.py -g jazz -or second -n 5`
+The easiest way to do this is with `pipeline.py`. This keeps all generated files well-organized, with consistent names to allow efficient data and model reuse.  
+Make sure you're in the root directory. Then, you will call `python3 src/main.py` in your command line, and the following flags are available:  
+`--genres` or `-g` : Takes one or more of `classical`, `jazz`, `nes`, `pop`, or `all`. e.g. `-g nes pop`. Not required; defaults to `all`. Beware `all` will take some time to process.  
+`--order` or `-or` : Takes one of `first` or `second`, to determine the order of the markov model. Required.  
+`--chord-strategy` or `-c` : Takes one of `highest`, `root`, or `skip`, to determine how to process chords in midi files. Not required; defaults to `highest`.  
+`--num-samples` or `-n` : Takes how many samples to generate. Not required; defaults to 1.  
+`--bpm` : Takes desired BPM for generated melodies. Not required; defaults to 120.  
+`--length` : Takes desired length for generated melodies. Not required; defaults to 30.  
+An example command looks like: `python3 src/main.py -g jazz -or second -n 5`  
 
-Note: The script will not re-generate preprocessed data or models if they already exist. Processed data is unique by its genres and chord strategy, and a model its genres, chord strategy, and order. If you want to generate a second version of these for some reason, rename the old one or move it to a different directory.
+Note: The script will not re-generate preprocessed data or models if they already exist. Processed data is unique by its genres and chord strategy, and a model its genres, chord strategy, and order. If you want to generate a second version of these for some reason, rename the old one or move it to a different directory.  
 
-Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` independently with CL args. But why would you do this?
+Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` independently with CL args. But why would you do this?  
 
 ## Approach
 - Train Markov models (1st and 2nd order) on pitch sequences
