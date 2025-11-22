@@ -9,7 +9,7 @@ def join_genres(genres: list):
     """
     return "_".join(sorted(genres))
 
-def get_preprocessed_path(genres: list, chord_strategy: str, base_dir="genre-data/processed"):
+def get_preprocessed_path(genres: list, chord_strategy: str, base_dir="data/processed"):
     """
     Returns the path to the preprocessed .pkl file.
     """
