@@ -1,11 +1,9 @@
 data/raw/
 data/processed/
-models/
 data/test_dir/
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-!models/.gitkeep
 !outputs/.gitkeep
 
 __pycache__/
