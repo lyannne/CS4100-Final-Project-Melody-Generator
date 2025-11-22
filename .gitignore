@@ -1,6 +1,7 @@
 data/raw/
 data/processed/
 data/test_dir/
+mood-data/
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep

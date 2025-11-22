@@ -43,6 +43,8 @@ MIDI files are not included directly due to size. Instead, follow these steps:
 1. Download each zip from [this Google Drive folder](https://drive.google.com/drive/folders/1j48kT7JdG92KWkNUhN6xpGdX9PffIkfU?usp=sharing).
 2. Extract them into `data/raw/`. They should remain in their folders, e.g.: `data/raw/classical/**.mid` 
 
+Note: There is now data from [XMusic](https://xmusic-project.github.io) which will be processed differently.
+
 ### Optional: MuseScore (for visualization)
 Download from https://musescore.org/ to view generated melodies as sheet music.  
 Not required for core functionality.
