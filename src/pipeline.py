@@ -9,12 +9,12 @@ def join_genres(genres: list):
     """
     return "_".join(sorted(genres))
 
-def get_preprocessed_path(genres: list, chord_strategy: str, base_dir="data/processed"):
+def get_preprocessed_path(genres: list, chord_strategy: str, base_dir="genre-data/processed"):
     """
     Returns the path to the preprocessed .pkl file.
     """
     genre_str = join_genres(genres)
-    filename = f"preprocessed_{genre_str}_{chord_strategy}.pkl"
+    filename = f"processed_{genre_str}_{chord_strategy}.pkl"
     full_path = os.path.join(base_dir, filename)
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     return full_path
@@ -50,9 +50,9 @@ def main():
         "--genres", "-g",
         nargs="+",
         required=False,
-        choices=["classical", "jazz", "nes", "pop", "all"],
+        choices=["classical", "jazz", "nes", "pop", "all", "all-genres", "angry", "warm", "sad", "exciting", "all-moods"],
         default=['all'],
-        help='One or more genres to include from data/raw, default `all`'
+        help='One or more genres/moods to include from data/raw, default `all-genres`'
     )
     parser.add_argument(
         "--order", "-or",
@@ -94,7 +94,11 @@ def main():
     bpm = args.bpm
     length = args.length
     if 'all' in genres:
+        genres = ['classical', 'jazz', 'nes', 'pop', 'angry', 'sad', 'exciting', 'warm']
+    elif 'all-genres' in genres:
         genres = ['classical', 'jazz', 'nes', 'pop']
+    elif 'all-moods' in genres:
+        genres = ['angry', 'sad', 'exciting', 'warm']
 
     print("="*50)
     print("MIDI Markov Model Pipeline")
