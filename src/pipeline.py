@@ -84,6 +84,14 @@ def main():
         type=int,
         help="Set length of generated melodies. Default 30sec."
     )
+    parser.add_argument(
+        "--key", "-k",
+        type=str,
+        default=None,
+        choices=['C_major', 'G_major', 'D_major', 'A_major', 'E_major', 'F_major', 
+                'A_minor', 'E_minor', 'D_minor', 'Bb_major'],
+        help="Musical key to constrain generation (e.g., C_major, A_minor)"
+    )
     args = parser.parse_args()
 
     # Get args
@@ -93,6 +101,7 @@ def main():
     num_samples = args.num_samples
     bpm = args.bpm
     length = args.length
+    key = args.key
     if 'all' in genres:
         genres = ['classical', 'jazz', 'nes', 'pop', 'angry', 'sad', 'exciting', 'warm']
     elif 'all-genres' in genres:
@@ -130,15 +139,29 @@ def main():
         ])
     
     for i in range(1, num_samples + 1):
-        fname = os.path.join(sample_dir, f"{i}.mid")
-        subprocess.run([
-            "python3", "src/generate.py",
-            "-i", model_dir,
-            "-o", fname,
-            "-or", order,
-            "--bpm", str(bpm),
-            "--length", str(length),
-        ])
+        if key is None:
+            fname = os.path.join(sample_dir, f"{i}.mid")
+            subprocess.run([
+                "python3", "src/generate.py",
+                "-i", model_dir,
+                "-o", fname,
+                "-or", order,
+                "--bpm", str(bpm),
+                "--length", str(length),
+            ])
+        else:
+            key_dir = os.path.join(sample_dir, key)
+            os.makedirs(key_dir, exist_ok=True)
+            fname = os.path.join(key_dir, f"{i}.mid")
+            subprocess.run([
+                "python3", "src/generate.py",
+                "-i", model_dir,
+                "-o", fname,
+                "-or", order,
+                "--bpm", str(bpm),
+                "--length", str(length),
+                "-k", key,
+            ])
 
     print("\n" + "="*50)
     print("Pipeline complete!")

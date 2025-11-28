@@ -5,8 +5,28 @@ import pickle
 import time
 
 REST = -1
+KEYS = {
+    'C_major': [0, 2, 4, 5, 7, 9, 11],   # C D E F G A B
+    'G_major': [7, 9, 11, 0, 2, 4, 6],   # G A B C D E F#
+    'D_major': [2, 4, 6, 7, 9, 11, 1],   # D E F# G A B C#
+    'A_major': [9, 11, 1, 2, 4, 6, 8],   # A B C# D E F# G#
+    'E_major': [4, 6, 8, 9, 11, 1, 3],   # E F# G# A B C# D#
+    'F_major': [5, 7, 9, 10, 0, 2, 4],   # F G A Bb C D E
+    'A_minor': [9, 11, 0, 2, 4, 5, 7],   # A B C D E F G
+    'E_minor': [4, 6, 7, 9, 11, 0, 2],   # E F# G A B C D
+    'D_minor': [2, 4, 5, 7, 9, 10, 0],   # D E F G A Bb C
+}
 
-def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None):
+def is_in_key(midi_note, key):
+    """Check if a MIDI note number is in the given key."""
+    if key not in KEYS:
+        return True 
+    
+    pitch_class = midi_note % 12
+    
+    return pitch_class in KEYS[key]
+
+def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None):
     """
     Input:
         `length`: float representing total length in seconds of the generated piece.
@@ -27,10 +47,19 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
     seconds_per_beat = 60.0 / BPM
     current_time = 0.0
 
+    candidates = starting_pitch_dist
+    if key is not None:
+        in_key_candidates = {note: prob for note, prob in candidates.items() 
+                            if note == REST or is_in_key(note, key)}
+        if in_key_candidates:
+            total = sum(in_key_candidates.values())
+            candidates = {note: prob/total for note, prob in in_key_candidates.items()}
+    
     current_note = random.choices(
-        population=list(starting_pitch_dist.keys()),
-        weights=list(starting_pitch_dist.values())
+        population=list(candidates.keys()),
+        weights=list(candidates.values())
     )[0]
+        
 
     current_duration = random.choices(
         population=list(starting_duration_dist.keys()),
@@ -50,14 +79,29 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
 
         if current_note in pitch_model:
             transitions = pitch_model[current_note]
+
+            if key is not None and current_note != REST:
+                in_key_transitions = {note: prob for note, prob in transitions.items() 
+                                     if note == REST or is_in_key(note, key)}
+                if in_key_transitions:
+                    total = sum(in_key_transitions.values())
+                    transitions = {note: prob/total for note, prob in in_key_transitions.items()}
+            
             current_note = random.choices(
                 population=list(transitions.keys()),
                 weights=list(transitions.values())
             )[0]
         else:
+            candidates = starting_pitch_dist
+            if key is not None:
+                in_key_candidates = {note: prob for note, prob in candidates.items() 
+                                   if note == REST or is_in_key(note, key)}
+                if in_key_candidates:
+                    total = sum(in_key_candidates.values())
+                    candidates = {note: prob/total for note, prob in in_key_candidates.items()}
             current_note = random.choices(
-                population=list(starting_pitch_dist.keys()),
-                weights=list(starting_pitch_dist.values())
+                population=list(candidates.keys()),
+                weights=list(candidates.values())
             )[0]
         
         if current_duration in duration_model:
@@ -81,7 +125,7 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
 
     return output_stream
 
-def generate_second_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None):
+def generate_second_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None):
     """
     Input:
         `length`: float representing total length in seconds of the generated piece.
@@ -90,7 +134,8 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
         `duration_model`: markov transition dictionary as a dict {(duration1, duration2): {next_duration: probability}}.
         `starting_pitch_dist`: Initial probability distribution as a dict {(note1, note2): probability}.
         `starting_duration_dist`: initial probability distribution as a dict {(duration1, duration2): probability}.
-        `save`: whether to save the resulting MIDI file (default False).
+        `save_path`: path to save MIDI file (optional).
+        `key`: musical key to constrain generation (optional).
 
     Returns:
         music21.stream.Stream: the generated music21 stream object.
@@ -127,14 +172,31 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
     while current_time < length:
         if current_note in pitch_model:
             transitions = pitch_model[current_note]
+            
+            if key is not None:
+                in_key_transitions = {note: prob for note, prob in transitions.items() 
+                                     if note == REST or is_in_key(note, key)}
+                if in_key_transitions:
+                    total = sum(in_key_transitions.values())
+                    transitions = {note: prob/total for note, prob in in_key_transitions.items()}
+            
             next_pitch = random.choices(
                 population=list(transitions.keys()),
                 weights=list(transitions.values())
             )[0]
         else:
+            candidates = starting_pitch_dist
+            
+            if key is not None:
+                in_key_candidates = {note_pair: prob for note_pair, prob in candidates.items() 
+                                   if note_pair[1] == REST or is_in_key(note_pair[1], key)}
+                if in_key_candidates:
+                    total = sum(in_key_candidates.values())
+                    candidates = {note_pair: prob/total for note_pair, prob in in_key_candidates.items()}
+            
             new_note = random.choices(
-                population=list(starting_pitch_dist.keys()),
-                weights=list(starting_pitch_dist.values())
+                population=list(candidates.keys()),
+                weights=list(candidates.values())
             )[0]
             next_pitch = new_note[1]
         
@@ -199,6 +261,14 @@ def main():
         default=30,
         help="Set length [in seconds] if provided. Default 30"
     )
+    parser.add_argument(
+        "--key", "-k",
+        type=str,
+        default=None,
+        choices=['C_major', 'G_major', 'D_major', 'A_major', 'E_major', 'F_major', 
+                'A_minor', 'E_minor', 'D_minor', 'Bb_major'],
+        help="Musical key to constrain generation (e.g., C_major, A_minor)"
+    )
 
     args = parser.parse_args()
 
@@ -208,6 +278,7 @@ def main():
     order = args.order
     bpm = args.bpm
     length = args.length
+    key = args.key
 
     # get models
     pitch_model = input_model_dir + '/pitch.pkl'
@@ -237,9 +308,9 @@ def main():
 
     start_time = time.time()
     if order == 'first':
-        generate_first_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file)
+        generate_first_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key)
     if order == 'second':
-        generate_second_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file)
+        generate_second_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key)
     end_time = time.time()
 
     print("="*50)

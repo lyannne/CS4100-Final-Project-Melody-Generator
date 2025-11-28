@@ -97,7 +97,7 @@ def main():
 
     print("\nFinished processing:")
     print(f"Completed in {end_time - start_time:.2f} seconds")
-    print(f"Saved processed data to data/processed/{args.output_name}.pkl")
+    print(f"Saved processed data to {args.output_name}")
 
 if __name__ == "__main__":
     main()
