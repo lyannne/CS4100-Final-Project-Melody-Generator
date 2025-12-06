@@ -89,8 +89,15 @@ def main():
         type=str,
         default=None,
         choices=['C_major', 'G_major', 'D_major', 'A_major', 'E_major', 'F_major', 
-                'A_minor', 'E_minor', 'D_minor', 'Bb_major'],
+                'A_minor', 'E_minor', 'D_minor', 'B_major'],
         help="Musical key to constrain generation (e.g., C_major, A_minor)"
+    )
+    parser.add_argument(
+        "--rhythm", "-r",
+        type=str,
+        default=None,
+        choices=['all', 'fast', 'moderate', 'slow'],
+        help='Set a note rhythm to standardize durations for the output'
     )
     args = parser.parse_args()
 

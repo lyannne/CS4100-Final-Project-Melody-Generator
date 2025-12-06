@@ -7,6 +7,7 @@ import time
 REST = -1
 KEYS = {
     'C_major': [0, 2, 4, 5, 7, 9, 11],   # C D E F G A B
+    'B_major': [11, 1, 3, 5, 6, 8, 10],  # B C# D# E F# G# A#
     'G_major': [7, 9, 11, 0, 2, 4, 6],   # G A B C D E F#
     'D_major': [2, 4, 6, 7, 9, 11, 1],   # D E F# G A B C#
     'A_major': [9, 11, 1, 2, 4, 6, 8],   # A B C# D E F# G#
@@ -16,6 +17,13 @@ KEYS = {
     'E_minor': [4, 6, 7, 9, 11, 0, 2],   # E F# G A B C D
     'D_minor': [2, 4, 5, 7, 9, 10, 0],   # D E F G A Bb C
 }
+RHYTHM_PROFILES = {
+    'fast': (0.25, 1.0),        
+    'moderate': (0.5, 2.0),       
+    'slow': (1.0, 4.0),      
+    'all': (0.25, 5.0)                   
+}
+
 
 def is_in_key(midi_note, key):
     """Check if a MIDI note number is in the given key."""
@@ -26,7 +34,19 @@ def is_in_key(midi_note, key):
     
     return pitch_class in KEYS[key]
 
-def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None):
+def quantize_duration(duration, quantize_to=0.25):
+    """Round duration to the nearest quantize_to value"""
+    return round(duration / quantize_to) * quantize_to
+
+def is_in_rhythm(duration, rhythm):
+    """Check if a duration is in the given rhythm profile."""
+    if rhythm not in RHYTHM_PROFILES:
+        return True
+    
+    min_dur, max_dur = RHYTHM_PROFILES[rhythm]
+    return min_dur <= duration <= max_dur
+
+def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None, rhythm=None):
     """
     Input:
         `length`: float representing total length in seconds of the generated piece.
@@ -36,6 +56,8 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
         `starting_pitch_dist`: Initial probability distribution as a dict {note: probability}.
         `starting_duration_dist`: initial probability distribution as a dict {duration: probability}.
         `save`: whether to save the resulting MIDI file (default False).
+        `key`: the key to constrain the output to.
+        `rhythm`: the rhythm profile to constrain the output to
 
     Returns:
         music21.stream.Stream: the generated music21 stream object.
@@ -60,11 +82,20 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
         weights=list(candidates.values())
     )[0]
         
+    duration_candidates = starting_duration_dist
+    if rhythm is not None:
+        in_rhythm_candidates = {dur: prob for dur, prob in duration_candidates.items() 
+                               if is_in_rhythm_profile(dur, rhythm)}
+        if in_rhythm_candidates:
+            total = sum(in_rhythm_candidates.values())
+            duration_candidates = {dur: prob/total for dur, prob in in_rhythm_candidates.items()}
 
     current_duration = random.choices(
-        population=list(starting_duration_dist.keys()),
-        weights=list(starting_duration_dist.values())
+        population=list(duration_candidates.keys()),
+        weights=list(duration_candidates.values())
     )[0]
+
+    current_duration = quantize_duration(current_duration)
 
     while current_time < length:
         if current_note == REST:
@@ -106,15 +137,33 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
         
         if current_duration in duration_model:
             transitions = duration_model[current_duration]
+            
+            if rhythm is not None:
+                in_rhythm_transitions = {dur: prob for dur, prob in transitions.items() 
+                                        if is_in_rhythm_profile(dur, rhythm)}
+                if in_rhythm_transitions:
+                    total = sum(in_rhythm_transitions.values())
+                    transitions = {dur: prob/total for dur, prob in in_rhythm_transitions.items()}
+            
             current_duration = random.choices(
                 population=list(transitions.keys()),
                 weights=list(transitions.values())
             )[0]
         else:
+            duration_candidates = starting_duration_dist
+            if rhythm is not None:
+                in_rhythm_candidates = {dur: prob for dur, prob in duration_candidates.items() 
+                                       if is_in_rhythm_profile(dur, rhythm)}
+                if in_rhythm_candidates:
+                    total = sum(in_rhythm_candidates.values())
+                    duration_candidates = {dur: prob/total for dur, prob in in_rhythm_candidates.items()}
+            
             current_duration = random.choices(
-                population=list(starting_duration_dist.keys()),
-                weights=list(starting_duration_dist.values())
+                population=list(duration_candidates.keys()),
+                weights=list(duration_candidates.values())
             )[0]
+
+        current_duration = quantize_duration(current_duration)
 
     if save_path:
         midi_file = midi.translate.streamToMidiFile(output_stream)
@@ -125,7 +174,7 @@ def generate_first_order(length, BPM, pitch_model, duration_model, starting_pitc
 
     return output_stream
 
-def generate_second_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None):
+def generate_second_order(length, BPM, pitch_model, duration_model, starting_pitch_dist, starting_duration_dist, save_path=None, key=None, rhythm=None):
     """
     Input:
         `length`: float representing total length in seconds of the generated piece.
@@ -147,19 +196,38 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
     seconds_per_beat = 60.0 / BPM
     current_time = 0.0
 
+    candidates = starting_pitch_dist
+    if key is not None:
+        in_key_candidates = {note_pair: prob for note_pair, prob in candidates.items() 
+                            if (note_pair[0] == REST or is_in_key(note_pair[0], key)) and
+                               (note_pair[1] == REST or is_in_key(note_pair[1], key))}
+        if in_key_candidates:
+            total = sum(in_key_candidates.values())
+            candidates = {note_pair: prob/total for note_pair, prob in in_key_candidates.items()}
+    
     current_note = random.choices(
-        population=list(starting_pitch_dist.keys()),
-        weights=list(starting_pitch_dist.values())
+        population=list(candidates.keys()),
+        weights=list(candidates.values())
     )[0]
 
+    duration_candidates = starting_duration_dist
+    if rhythm is not None:
+        in_rhythm_candidates = {dur_pair: prob for dur_pair, prob in duration_candidates.items() 
+                               if is_in_rhythm_profile(dur_pair[0], rhythm) and 
+                                  is_in_rhythm_profile(dur_pair[1], rhythm)}
+        if in_rhythm_candidates:
+            total = sum(in_rhythm_candidates.values())
+            duration_candidates = {dur_pair: prob/total for dur_pair, prob in in_rhythm_candidates.items()}
+
     current_duration = random.choices(
-        population=list(starting_duration_dist.keys()),
-        weights=list(starting_duration_dist.values())
+        population=list(duration_candidates.keys()),
+        weights=list(duration_candidates.values())
     )[0]
 
     for i in range(2):
         pitch = current_note[i]
         duration = current_duration[i]
+        duration = quantize_duration(duration)
         
         if pitch == REST:
             n = note.Rest()
@@ -202,16 +270,34 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
         
         if current_duration in duration_model:
             transitions = duration_model[current_duration]
+            
+            if rhythm is not None:
+                in_rhythm_transitions = {dur: prob for dur, prob in transitions.items() 
+                                        if is_in_rhythm_profile(dur, rhythm)}
+                if in_rhythm_transitions:
+                    total = sum(in_rhythm_transitions.values())
+                    transitions = {dur: prob/total for dur, prob in in_rhythm_transitions.items()}
+            
             next_duration = random.choices(
                 population=list(transitions.keys()),
                 weights=list(transitions.values())
             )[0]
         else:
+            duration_candidates = starting_duration_dist
+            if rhythm is not None:
+                in_rhythm_candidates = {dur_pair: prob for dur_pair, prob in duration_candidates.items() 
+                                       if is_in_rhythm_profile(dur_pair[1], rhythm)}
+                if in_rhythm_candidates:
+                    total = sum(in_rhythm_candidates.values())
+                    duration_candidates = {dur_pair: prob/total for dur_pair, prob in in_rhythm_candidates.items()}
+            
             new_duration = random.choices(
-                population=list(starting_duration_dist.keys()),
-                weights=list(starting_duration_dist.values())
+                population=list(duration_candidates.keys()),
+                weights=list(duration_candidates.values())
             )[0]
             next_duration = new_duration[1]
+
+        next_duration = quantize_duration(next_duration)
 
         if next_pitch == REST:
             n = note.Rest()
@@ -266,8 +352,15 @@ def main():
         type=str,
         default=None,
         choices=['C_major', 'G_major', 'D_major', 'A_major', 'E_major', 'F_major', 
-                'A_minor', 'E_minor', 'D_minor', 'Bb_major'],
+                'A_minor', 'E_minor', 'D_minor', 'B_major'],
         help="Musical key to constrain generation (e.g., C_major, A_minor)"
+    )
+    parser.add_argument(
+        "--rhythm", "-r",
+        type=str,
+        default=None,
+        choices=['all', 'fast', 'moderate', 'slow'],
+        help="Set a note rhythm to standardize durations for the output"
     )
 
     args = parser.parse_args()
@@ -279,6 +372,7 @@ def main():
     bpm = args.bpm
     length = args.length
     key = args.key
+    rhythm = args.rhythm
 
     # get models
     pitch_model = input_model_dir + '/pitch.pkl'
@@ -308,9 +402,9 @@ def main():
 
     start_time = time.time()
     if order == 'first':
-        generate_first_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key)
+        generate_first_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key, rhythm)
     if order == 'second':
-        generate_second_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key)
+        generate_second_order(length, bpm, pitch_transitions, duration_transitions, pitch_dist, duration_dist, output_file, key, rhythm)
     end_time = time.time()
 
     print("="*50)

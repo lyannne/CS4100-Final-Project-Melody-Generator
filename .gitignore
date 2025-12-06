@@ -1,4 +1,5 @@
 data/
+outputs/
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep

@@ -3,7 +3,7 @@
 ## Jazz Dataset:
 - Source: Weimar Jazz Database
 - URL: https://jazzomat.hfm-weimar.de/dbformat/dboverview.html
-- Files used: XX MIDI files from `/data/raw/jazz`
+- Files used: 456 MIDI files from `/data/raw/jazz`
 
 >@Book{Pfleiderer:2017:BOOK,
   title =     {{I}nside the {J}azzomat - {N}ew {P}erspectives for {J}azz  {R}esearch},
@@ -16,7 +16,7 @@
 ## Classical Dataset:
 - Source: MAESTRO Dataset
 - URL: https://magenta.tensorflow.org/datasets/maestro
-- Files used: XX MIDI files from `data/raw/classical`
+- Files used: 1276 MIDI files from `data/raw/classical`
 - License file: See `/docs/maestro data/LICENSE`
 
 >@inproceedings{
@@ -32,7 +32,7 @@
 ## Pop Dataset:
 - Source: POP909 Dataset
 - URL: https://github.com/music-x-lab/POP909-Dataset/tree/master
-- Files used: 909 MIDI files from data/raw/pop
+- Files used: 909 MIDI files from `data/raw/pop`
 - License file: See `docs/pop909 data/LICENSE`
 
 >@inproceedings{pop909-ismir2020,
@@ -46,7 +46,7 @@
 ## NES Dataset:
 - Source: The NES Music Database
 - URL: https://github.com/chrisdonahue/nesmdb
-- Files used: XX MIDI files from data/raw/nes
+- Files used: 5278 MIDI files from `data/raw/nes`
 - License file: See `docs/nes data/LICENSE`
 
 >@inproceedings{donahue2018nesmdb,
@@ -54,4 +54,17 @@
   author={Donahue, Chris and Mao, Huanru Henry and McAuley, Julian},
   booktitle={ISMIR},
   year={2018}
+}
+
+## XMIDI Dataset:
+- Source: XMusic
+- URL: https://xmusic-project.github.io
+- Files used: 108023 MIDI files from `data/raw/{mood}`
+
+@article{xmusic2025,
+  title={XMusic: Towards a Generalized and Controllable Symbolic Music Generation Framework},
+  author={Tian, Sida and Zhang, Can and Yuan, Wei and Tan, Wei and Zhu, Wenjie},
+  journal={IEEE Transactions on Multimedia},
+  year={2025},
+  publisher={IEEE}
 }
