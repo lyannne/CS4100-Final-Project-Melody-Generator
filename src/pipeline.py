@@ -109,6 +109,7 @@ def main():
     bpm = args.bpm
     length = args.length
     key = args.key
+    rhythm = args.rhythm
     if 'all' in genres:
         genres = ['classical', 'jazz', 'nes', 'pop', 'angry', 'sad', 'exciting', 'warm']
     elif 'all-genres' in genres:
@@ -146,29 +147,34 @@ def main():
         ])
     
     for i in range(1, num_samples + 1):
-        if key is None:
-            fname = os.path.join(sample_dir, f"{i}.mid")
-            subprocess.run([
-                "python3", "src/generate.py",
-                "-i", model_dir,
-                "-o", fname,
-                "-or", order,
-                "--bpm", str(bpm),
-                "--length", str(length),
-            ])
+        subdir_parts = []
+        if key is not None:
+            subdir_parts.append(key)
+        if rhythm is not None:
+            subdir_parts.append(rhythm)
+        
+        if subdir_parts:
+            constraint_dir = os.path.join(sample_dir, "_".join(subdir_parts))
+            os.makedirs(constraint_dir, exist_ok=True)
+            fname = os.path.join(constraint_dir, f"{i}.mid")
         else:
-            key_dir = os.path.join(sample_dir, key)
-            os.makedirs(key_dir, exist_ok=True)
-            fname = os.path.join(key_dir, f"{i}.mid")
-            subprocess.run([
-                "python3", "src/generate.py",
-                "-i", model_dir,
-                "-o", fname,
-                "-or", order,
-                "--bpm", str(bpm),
-                "--length", str(length),
-                "-k", key,
-            ])
+            fname = os.path.join(sample_dir, f"{i}.mid")
+
+        cmd = [
+            "python3", "src/generate.py",
+            "-i", model_dir,
+            "-o", fname,
+            "-or", order,
+            "--bpm", str(bpm),
+            "--length", str(length),
+        ]
+        
+        if key is not None:
+            cmd.extend(["-k", key])
+        if rhythm is not None:
+            cmd.extend(["-r", rhythm])
+        
+        subprocess.run(cmd)
 
     print("\n" + "="*50)
     print("Pipeline complete!")

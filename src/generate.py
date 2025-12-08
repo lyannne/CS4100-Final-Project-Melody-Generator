@@ -36,9 +36,12 @@ def is_in_key(midi_note, key):
 
 def quantize_duration(duration, quantize_to=0.25):
     """Round duration to the nearest quantize_to value"""
-    return round(duration / quantize_to) * quantize_to
+    duration = round(duration / quantize_to) * quantize_to
+    if duration <= 0:
+        duration = 0.25
+    return duration
 
-def is_in_rhythm(duration, rhythm):
+def is_in_rhythm_profile(duration, rhythm):
     """Check if a duration is in the given rhythm profile."""
     if rhythm not in RHYTHM_PROFILES:
         return True
@@ -189,7 +192,6 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
     Returns:
         music21.stream.Stream: the generated music21 stream object.
     """
-
     output_stream = stream.Stream()
     output_stream.append(tempo.MetronomeMark(number=BPM))
 
@@ -204,6 +206,13 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
         if in_key_candidates:
             total = sum(in_key_candidates.values())
             candidates = {note_pair: prob/total for note_pair, prob in in_key_candidates.items()}
+
+    candidates = {note_pair: prob for note_pair, prob in candidates.items()
+                    if not (note_pair[0] == REST and note_pair[1] == REST)}
+
+    if not candidates:
+        candidates = {note_pair: prob for note_pair, prob in starting_pitch_dist.items()
+                        if note_pair[0] != REST or note_pair[1] != REST}
     
     current_note = random.choices(
         population=list(candidates.keys()),
@@ -309,6 +318,7 @@ def generate_second_order(length, BPM, pitch_model, duration_model, starting_pit
 
         current_note = (current_note[1], next_pitch)
         current_duration = (current_duration[1], next_duration)
+
 
     if save_path:
         midi_file = midi.translate.streamToMidiFile(output_stream)
