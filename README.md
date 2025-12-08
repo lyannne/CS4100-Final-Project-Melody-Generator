@@ -7,27 +7,28 @@ Generate melodies using Markov models trained on MIDI data, with genre or mood-b
 ```
 /data
   /raw                           # Midi training files
-    /classical                 
-    /jazz
-    /nes
-    /pop
+    /angry                      # Organized by genre/mood
+    /classical
   /processed                     # Parsed data to reuse
-/docs                            # Documentation, data sources, research/notes
-/models                          # Trained transition matrices
-  /jazz_highest_second          # Models organized by directory
+/docs                             # Documentation, data sources, research/notes
+/evaluation                       # Generated figures
+/models                           # Trained transition matrices
+  /jazz_highest_second           # Models organized by directory
     /pitch.pkl
     /duration.pkl
-/outputs                         # Generated samples/MIDI sequences
-  /jazz_highest_second          # Outputs organized by directory
+/outputs                          # Generated samples/MIDI sequences
+  /jazz_highest_second           # Outputs organized by directory
     /1.mid
-/src                             # Source code
-  generate.py                   # Generates melodies using provided markov models
-  markov.py                     # Constructs markov models of different orders
-  parse_midi.py                 # Processes a single midi file into our representation
-  pipeline.py                   # Contains full pipeline to train a model and generate a melody
-  preprocess.py                 # Script to process all midi files by genre
-  #evaluate.py                  # For metrics/figures/etc.
-requirements.txt                 # Python dependencies
+/src                              # Source code
+  evaluate.ipynb                 # Figures/metrics for report
+  evaluate.py                    # Figures/metrics for presentation
+  generate.py                    # Generates melodies using provided markov models
+  markov.py                      # Constructs markov models of different orders
+  mood_data_pipeline.py          # Organizes mood dataset by mood labels in folders
+  parse_midi.py                  # Processes a single midi file into our representation
+  pipeline.py                    # Contains full pipeline to train a model and generate a melody
+  preprocess.py                  # Script to process all midi files by genre
+requirements.txt                  # Python dependencies
 README.md
 ```
 
@@ -57,10 +58,12 @@ Make sure you're in the root directory. Then, you will call `python3 src/pipelin
 `--chord-strategy` or `-c` : Takes one of `highest`, `root`, or `skip`, to determine how to process chords in midi files. Not required; defaults to `highest`.  
 `--num-samples` or `-n` : Takes how many samples to generate. Not required; defaults to 1.  
 `--bpm` : Takes desired BPM for generated melodies. Not required; defaults to 120.  
-`--length` : Takes desired length for generated melodies. Not required; defaults to 30.  
+`--length` : Takes desired length for generated melodies. Not required; defaults to 30. 
+`--key` or `-k` : Takes desired key for generated melodies. Not required; default none.
+`--rhythm` or `-r` : Takes desired rhythm profile. Not required; default none. 
 An example command looks like:
 ```bash
-python3 src/pipeline.py -g jazz -or second -n 5
+python3 src/pipeline.py -g jazz -or second -n 5 -c root -k C_major
 ```
 
 Note: The script will not re-generate preprocessed data or models if they already exist. Processed data is unique by its genres and chord strategy, and a model its genres, chord strategy, and order. If you want to generate a second version of these for some reason, rename the old one or move it to a different directory.  
@@ -68,10 +71,10 @@ Note: The script will not re-generate preprocessed data or models if they alread
 Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` independently with CL args. But why would you do this?  
 
 ## Approach
-- Train Markov models (1st and 2nd order) on pitch sequences
-- Train separate Markov model on rhythm/duration sequences
+- Construct Markov models (1st and 2nd order) from pitch sequences
+- Construct separate Markov model on rhythm/duration sequences
 - Combine pitch + rhythm to generate complete melodies
-- Add genre-specific models OR mood-based constraints for variation
+- Add genre- and mood-specific models for variation
 
 ## Major Components
 **1. Data & Preprocessing**
