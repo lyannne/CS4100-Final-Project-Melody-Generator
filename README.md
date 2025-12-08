@@ -41,18 +41,20 @@ pip install -r requirements.txt
 
 ### Data
 MIDI files are not included directly due to size. Instead, follow these steps:
-1. Download each zip from [this Google Drive folder](https://drive.google.com/drive/folders/1j48kT7JdG92KWkNUhN6xpGdX9PffIkfU?usp=sharing).
+1. Download each genre zip from [this Google Drive folder](https://drive.google.com/drive/folders/1j48kT7JdG92KWkNUhN6xpGdX9PffIkfU?usp=sharing).
 2. Extract them into `data/raw/`. They should remain in their folders, e.g.: `data/raw/classical/**.mid` 
 
-Note: There is now data from [XMusic](https://xmusic-project.github.io) which will be processed differently.
+There is also data from [XMusic](https://xmusic-project.github.io) in the Google Drive folder. If you wish to create mood models:
+1. Download the zip and extract into any folder (preferably somewhere easily accessible from this project).
+2. Run `python src/mood_data_pipeline.py --organize --source {source_dir_path}`. You can also adjust the destination directory with the `--dest` tag for where the sorted files will go, but by default they will go into mood folders in `data/raw/`.
 
 ### Optional: MuseScore (for visualization)
 Download from https://musescore.org/ to view generated melodies as sheet music.  
-Not required for core functionality.
+Not required for core functionality. We do not include code to do this. Just fun to consider!
 
 ### Using the program
 The easiest way to do this is with `pipeline.py`. This keeps all generated files well-organized, with consistent names to allow efficient data and model reuse.  
-Make sure you're in the root directory. Then, you will call `python3 src/pipeline.py` in your command line, and the following flags are available:  
+Make sure you're in the root directory. Then, you will call `python src/pipeline.py` in your command line, and the following flags are available:  
 `--genres` or `-g` : Takes one or more of `classical`, `jazz`, `nes`, `pop`, or `all`. e.g. `-g nes pop`. Not required; defaults to `all`. Beware `all` will take some time to process.  
 `--order` or `-or` : Takes one of `first` or `second`, to determine the order of the markov model. Required.  
 `--chord-strategy` or `-c` : Takes one of `highest`, `root`, or `skip`, to determine how to process chords in midi files. Not required; defaults to `highest`.  
@@ -63,12 +65,16 @@ Make sure you're in the root directory. Then, you will call `python3 src/pipelin
 `--rhythm` or `-r` : Takes desired rhythm profile. Not required; default none. 
 An example command looks like:
 ```bash
-python3 src/pipeline.py -g jazz -or second -n 5 -c root -k C_major
+python src/pipeline.py -g jazz -or second -n 5 -c root -k C_major
 ```
+
+We include multiple pre-built models in the repository. You can find them in models/. Each model directory is of the form {genre(s)}\_{chord-strategy}\_{model-order}, where there can be any number of genres, separated by `_`. Thus, if you want to generate from the `classical_root_second` model, the genre, order, and chord-strategy tags must match exactly. The rest of the tags do not change the model, so you may experiment to your liking!
+
+To actually run the generated samples, you need some form of MIDI player. Windows has this natively; MacOS does not. There are plenty of free options available for download, such as NS MIDI Player, but choose your favorite! 
 
 Note: The script will not re-generate preprocessed data or models if they already exist. Processed data is unique by its genres and chord strategy, and a model its genres, chord strategy, and order. If you want to generate a second version of these for some reason, rename the old one or move it to a different directory.  
 
-Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` independently with CL args. But why would you do this?  
+Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` independently with CL args. However it requires significantly more effort in determining the appropriate input/output file locations, and we do not recommend it.
 
 ## Approach
 - Construct Markov models (1st and 2nd order) from pitch sequences
@@ -80,35 +86,22 @@ Note 2: You can also run `preprocess.py`, `markov.py`, and `generate.py` indepen
 **1. Data & Preprocessing**
 - Collect MIDI files
 - Parse into pitch and duration sequences
-- Clean and organize data
+- Clean and organize data into genre/mood directories.
+- `parse_midi.py`, `preprocess.py`, `mood_data_pipeline.py`
 
 **2. Core Markov Models**
 - 1st-order model (baseline)
 - 2nd-order model (better context)
-- Separate rhythm model
+- Separate pitch and rhythm models.
+- `markov.py`
 
 **3. Generation**
 - Sample from trained models
 - Combine pitch + rhythm
 - Output as MIDI files
+- `generate.py`, `pipeline.py`
 
-**4. Enhancement (choose at least one)**
-- Genre-specific: Train models on different musical styles
-- Mood-based: Add constraints to guide generation toward emotional tone
-- Harmony generation: Modify training and generation to create a harmony from an existing melody sequence
-
-**5. Evaluation & Documentation**
+**4. Evaluation & Documentation**
 - Generate sample outputs
 - Compare different approaches (metrics + listening)
-- Write up results, prepare demo, and create graphs/figures
-
-## Timeline
-- [Nov 2 - Nov 8]: environment setup, data, 1st order model
-- [Nov 9 - Nov 15]: 2nd order, rhythm generation
-  - Meet with TA by **Nov 14**
-- [Nov 16 - Nov 22]: Enhancement features, generate samples
-- [Nov 23 - Nov 29]: Prepare slides, demos, figures
-  - Slides due **Nov 28**
-- [Nov 30 - Dec 10]: Final report, clean up repo
-  - Presentations week of **Dec 1**
-  - Final deliverables due **Dec 10**
+- `evaluate.py`, `evaluate.ipynb`

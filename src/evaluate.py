@@ -4,6 +4,7 @@ import statistics
 import argparse
 import matplotlib.pyplot as plt
 
+
 def analyze_midi_file(filepath, collect_distributions=False):
     """Analyze a single MIDI file and return metrics."""
     score = converter.parse(filepath)
